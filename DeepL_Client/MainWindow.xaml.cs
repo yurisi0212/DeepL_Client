@@ -35,11 +35,14 @@ namespace DeepL_Client {
             changeEnable(false);
             using (var httpClient = new HttpClient()) {
                 using (var request = new HttpRequestMessage(new HttpMethod("POST"), "https://api-free.deepl.com/v2/translate")) {
+                    ResetTextBox();
                     var contentList = new List<string>();
                     contentList.Add("auth_key=" + tokenManager.DeepL_Token);
                     contentList.Add("text=" + BeforeTextBox.Text);
-                    contentList.Add("target_lang=EN");
+                    var isJapaneseToEnglish = JapaneseToggleButton.IsChecked != null && (bool)JapaneseToggleButton.IsChecked;
+                    var lang = isJapaneseToEnglish ? "EN" : "JA";
 
+                    contentList.Add("target_lang=" + lang);
 
                     request.Content = new StringContent(string.Join("&", contentList));
                     request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/x-www-form-urlencoded");
@@ -49,7 +52,7 @@ namespace DeepL_Client {
                     var resBodyStr = response.Content.ReadAsStringAsync().Result;
                     JObject deserial = (JObject)JsonConvert.DeserializeObject(resBodyStr);
 
-                    if(deserial == null) {
+                    if (deserial == null) {
                         AfterTextBox.Text = "取得できませんでした。\nトークンが無効か、DeepLサーバーが落ちている可能性があります。";
                         AfterSnakecaseTextBox.Text = "";
                         changeEnable(true);
@@ -60,10 +63,11 @@ namespace DeepL_Client {
 
                     AfterTextBox.Text = text;
 
-                    var snakecase_text = text.ToLower().Replace(' ', '_');
-
-                    AfterSnakecaseTextBox.Text = snakecase_text;
-
+                    if (isJapaneseToEnglish) {
+                        var snakecase_text = text.ToLower().Replace(' ', '_');
+                        AfterSnakecaseTextBox.Text = snakecase_text;
+                    }
+                    
                 }
             }
             changeEnable(true);
@@ -85,6 +89,11 @@ namespace DeepL_Client {
             AfterTextBox.IsEnabled = enable;
             AfterSnakecaseTextBox.IsEnabled = enable;
             Translate_Button.IsEnabled = enable;
+        }
+
+        private void ResetTextBox() {
+            AfterTextBox.Text = "";
+            AfterSnakecaseTextBox.Text = "";
         }
     }
 }
